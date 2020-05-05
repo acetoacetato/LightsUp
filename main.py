@@ -70,11 +70,9 @@ class Espacio:
 
 class Pared:
     numero: int
-    texto: pygame.font
 
     def __init__(self, numero):
         self.numero = numero
-        self.font = pygame.font.SysFont('Arial', 25)
 
     def print(self):
         print('[', end='')
@@ -249,60 +247,38 @@ def main():
         pygame.draw.line(screen, (230, 30, 30), (150 + i*ancho, 100), (150 +  i*ancho, 100 + 400), 4)
     tablero.update()
     sleep(1)
-    while not tablero.verifica_tablero():
-        for i in range(tablero.largo):
+    espacios = []
+    paredes = []
+    for i in range(tablero.largo):
             for j in range(tablero.ancho):
-                aux = tablero.tablero[i][j]
-                if isinstance(aux, Espacio) and tablero.tablero[i][j].iluminado == True:
-                    continue
-                if isinstance(aux, Pared):
-                    if aux.numero != -1:
-                        regla_1(tablero, i, j) # pared
-                        regla_2(tablero, i, j) # 
-                        regla_3(tablero, i, j)
-                    else:
-                        continue
+                if isinstance(tablero.tablero[i][j], Espacio):
+                    espacios.append((i,j))
                 else:
-                    if aux.estado == 1:
-                        regla_4(tablero, i, j)
-                    else:
-                        regla_5(tablero, i, j)
-            tablero.update()
+                    paredes.append((i,j))
+
+    print(paredes)
+    while not tablero.verifica_tablero():
+        for tupla in espacios:
+            espacio = tablero.tablero[tupla[0]][tupla[1]]
+            if espacio.iluminado:
+                continue
+            elif espacio.estado == 1:
+                regla_4(tablero, tupla[0], tupla[1])
+            else:
+                regla_5(tablero, tupla[0], tupla[1])
+        print("termina espacios")
+
+        for tupla in paredes:
+            pared = tablero.tablero[tupla[0]][tupla[1]]
+            if pared.numero != -1:
+                regla_1(tablero, tupla[0], tupla[1]) # pared
+                regla_2(tablero, tupla[0], tupla[1]) # 
+                regla_3(tablero, tupla[0], tupla[1])
+        print("termina pared")
+        tablero.update()
 
     print("Resuelto!!");
-    #sleep(1)
-    #tablero.coloca_ampolleta(1,5)
-    #tablero.coloca_ampolleta(2,4)
-    #tablero.coloca_ampolleta(3,5)
-    #tablero.coloca_ampolleta(2,6)
-    #if tablero.verifica_tablero():
-    #    print("RESUELTO!!")
-    #sleep(1)
-    #tablero.coloca_ampolleta(2,0)
-    #tablero.coloca_ampolleta(1,1)
-    #if tablero.verifica_tablero():
-    #    print("RESUELTO!!")
-    #sleep(1)
-    #tablero.bloquea(0,2)
-    #tablero.bloquea(1,3)
-    #tablero.bloquea(2,2)
-    #tablero.bloquea(5,5)
-    #if tablero.verifica_tablero():
-    #    print("RESUELTO!!")
-    #sleep(1)
-    #tablero.coloca_ampolleta(6,5)
-    #if tablero.verifica_tablero():
-    #    print("RESUELTO!!")
-    #sleep(1)
-    #tablero.coloca_ampolleta(5,1)
-    #tablero.coloca_ampolleta(5,3)
-    #tablero.coloca_ampolleta(4,2)
-    #if tablero.verifica_tablero():
-    #    print("RESUELTO!!")
-    #sleep(1)
-    #tablero.coloca_ampolleta(0,4)
-    #if tablero.verifica_tablero():
-    #    print("RESUELTO!!")
+
 
     while True:
         # Posibles entradas del teclado y mouse
