@@ -70,9 +70,11 @@ class Espacio:
 
 class Pared:
     numero: int
+    texto: pygame.font
 
     def __init__(self, numero):
         self.numero = numero
+        self.font = pygame.font.SysFont('Arial', 25)
 
     def print(self):
         print('[', end='')
@@ -256,17 +258,16 @@ def main():
                 else:
                     paredes.append((i,j))
 
-    print(paredes)
+
     while not tablero.verifica_tablero():
         for tupla in espacios:
             espacio = tablero.tablero[tupla[0]][tupla[1]]
             if espacio.iluminado:
-                continue
+                pass#espacios.remove(tupla)
             elif espacio.estado == 1:
                 regla_4(tablero, tupla[0], tupla[1])
             else:
                 regla_5(tablero, tupla[0], tupla[1])
-        print("termina espacios")
 
         for tupla in paredes:
             pared = tablero.tablero[tupla[0]][tupla[1]]
@@ -274,12 +275,11 @@ def main():
                 regla_1(tablero, tupla[0], tupla[1]) # pared
                 regla_2(tablero, tupla[0], tupla[1]) # 
                 regla_3(tablero, tupla[0], tupla[1])
-        print("termina pared")
+        
         tablero.update()
 
     print("Resuelto!!");
-
-
+ 
     while True:
         # Posibles entradas del teclado y mouse
         for event in pygame.event.get():

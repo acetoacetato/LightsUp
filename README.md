@@ -29,4 +29,5 @@ Las reglas propuestas pueden resolver puzles de dificultad fácil y algunos medi
 
 - [x] Implementar métodos dentro del tablero para insertar ampolletas, bloquear espacios y verificar completitud del puzle.
 - [ ] Separar lógica de la interfaz en archivo separado.
-- [ ] Crear el loop principal con verificación de reglas para luego aplicarlas.
+- [x] Crear el loop principal con verificación de reglas para luego aplicarlas.
+- [ ] Agregar elementos a la interfaz para poder ver paso a paso la resolución
