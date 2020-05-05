@@ -96,6 +96,7 @@ class Tablero:
     tablero : [[]]
     largo: int
     ancho: int
+    max_dim: int
     def __init__(self, filename):
         f = open(filename, 'r')
 
@@ -105,7 +106,10 @@ class Tablero:
  
         # Se inicializa el arreglo con 0
         self.tablero = [[0 for x in range(self.ancho)] for y in range(self.largo)] 
-
+        if self.ancho > self.largo:
+            self.max_dim = self.ancho
+        else:
+            self.max_dim = self.largo
         lineas = f.readlines()
         x, y = [0,0]
         for linea in lineas:
@@ -263,9 +267,11 @@ def main():
         for tupla in espacios:
             espacio = tablero.tablero[tupla[0]][tupla[1]]
             if espacio.iluminado:
-                pass#espacios.remove(tupla)
+                #espacios.remove(tupla)
+                continue
             elif espacio.estado == 1:
                 regla_4(tablero, tupla[0], tupla[1])
+
             else:
                 regla_5(tablero, tupla[0], tupla[1])
 
@@ -343,33 +349,36 @@ def regla_4(tablero, x, y):
     espacio = tablero.tablero[x][y]
     espacios_vacios = []
     if isinstance(espacio, Espacio) and espacio.estado == 1 and espacio.iluminado == False:
-        for i in range(y,-1,-1):
-            espacio = tablero.tablero[x][i]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado != 1 and espacio.estado != 2 and espacio.iluminado == False:
-                espacios_vacios.append((x,i))
-        for i in range(y,tablero.largo):
-            espacio = tablero.tablero[x][i]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado != 1 and espacio.iluminado == False:
-                espacios_vacios.append((x,i))
 
-        for i in range(x,-1,-1):
-            espacio = tablero.tablero[i][y]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado != 1 and espacio.iluminado == False:
-                espacios_vacios.append((i,y))
+        flag_up, flag_down, flag_left, flag_right = [True, True, True, True]
+        for i in range(1, tablero.max_dim):
+            try:
+                if flag_up and tablero.tablero[x][y+i].iluminado == False and tablero.tablero[x][y+i].estado == 0:
+                    espacios_vacios.append((x, y+i))
+            except:
+                flag_up = False
 
-        for i in range(x,tablero.ancho):
-            espacio = tablero.tablero[i][y]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado != 1 and espacio.iluminado == False:
-                espacios_vacios.append((i,y))
-    
+            try:
+                if flag_down and tablero.tablero[x][y-i].iluminado == False and tablero.tablero[x][y-i].estado == 0:
+                    espacios_vacios.append((x, y-i))
+            except:
+                flag_down = False
+
+            try:
+                if flag_left and tablero.tablero[x-i][y].iluminado == False and tablero.tablero[x-i][y].estado == 0:
+                    espacios_vacios.append((x-i, y))
+            except:
+                flag_left = False
+
+            try:
+                if flag_right and tablero.tablero[x+i][y].iluminado == False and tablero.tablero[x+i][y].estado == 0:
+                    espacios_vacios.append((x+i, y))
+            except:
+                flag_right = False
+            
+
+
+
         if len(espacios_vacios) == 1:
             coord = espacios_vacios[0]
             tablero.coloca_ampolleta(coord[0], coord[1])
@@ -380,35 +389,33 @@ def regla_5(tablero, x, y):
     espacios_vacios = 0
     if isinstance(espacio, Pared) or espacio.estado != 0 or espacio.iluminado == True:
         return
-    
-    for i in range(x-1,-1,-1):
-            espacio = tablero.tablero[i][y]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado == 0 and espacio.iluminado == False:
-                espacios_vacios = espacios_vacios + 1
 
-    for i in range(x+1, tablero.ancho):
-            espacio = tablero.tablero[i][y]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado == 0 and espacio.iluminado == False:
+    flag_up, flag_down, flag_left, flag_right = [True, True, True, True]
+    for i in range(1, tablero.max_dim):
+        try:
+            if flag_up and tablero.tablero[x][y+i].iluminado == False and tablero.tablero[x][y+i].estado == 0:
                 espacios_vacios = espacios_vacios + 1
+        except:
+            flag_up = False
 
-
-    for i in range(y-1,-1,-1):
-            espacio = tablero.tablero[x][i]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado == 0 and espacio.iluminado == False:
+        try:
+            if flag_down and tablero.tablero[x][y-i].iluminado == False and tablero.tablero[x][y-i].estado == 0:
                 espacios_vacios = espacios_vacios + 1
+        except:
+            flag_down = False
 
-    for i in range(y+1,tablero.largo):
-            espacio = tablero.tablero[x][i]
-            if isinstance(espacio, Pared):
-                break
-            if espacio.estado == 0 and espacio.iluminado == False:
+        try:
+            if flag_left and tablero.tablero[x-i][y].iluminado == False and tablero.tablero[x-i][y].estado == 0:
                 espacios_vacios = espacios_vacios + 1
+        except:
+            flag_left = False
+
+        try:
+            if flag_right and tablero.tablero[x+i][y].iluminado == False and tablero.tablero[x+i][y].estado == 0:
+                espacios_vacios = espacios_vacios + 1
+        except:
+            flag_right = False
+
 
     if espacios_vacios == 0:
         tablero.coloca_ampolleta(x, y)
