@@ -5,7 +5,7 @@ from time import sleep
 
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 600
-filename = "input.txt"
+filename = "input4.txt"
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -33,7 +33,6 @@ class Imagenes:
 class Espacio:
     estado: int
     iluminado: bool
-    texto: pygame.font
 
     def __init__(self, estado=0, iluminado=False):
         self.estado = estado
@@ -112,6 +111,7 @@ class Tablero:
         for linea in lineas:
             datos = linea.strip().split(' ')
             for dato in datos:
+
                 if dato == '-':
                     aux = Espacio()
                 else:
@@ -119,12 +119,15 @@ class Tablero:
 
                 self.tablero[x][y] = aux
                 x = x + 1
+                
             x = 0
             y = y + 1
 
         # Se imprime el tablero para confirmar
         for i in range(self.largo):
             for j in range(self.ancho):
+                #print(type(self.tablero[i][j]), end='')
+                #print(' (' + str(i) + ',' + str(j) + ')')
                 self.tablero[i][j].print()
             print('')
 
@@ -183,7 +186,7 @@ class Tablero:
                 else:
                     espacio.iluminado = True
 
-        self.update()
+        #self.update()
     def bloquea(self, x, y):
         if x > self.ancho or x < 0:
             return
@@ -196,7 +199,7 @@ class Tablero:
         if self.tablero[x][y].estado ==2:
             return
         self.tablero[x][y].estado = 1
-        self.update()
+        #self.update()
 
     def verifica_tablero(self) -> bool:
         for i in range(self.largo):
@@ -244,44 +247,62 @@ def main():
     # Para líneas verticales
     for i in range(1, tablero.largo):
         pygame.draw.line(screen, (230, 30, 30), (150 + i*ancho, 100), (150 +  i*ancho, 100 + 400), 4)
-    
-
-
-
     tablero.update()
     sleep(1)
-    tablero.coloca_ampolleta(1,5)
-    tablero.coloca_ampolleta(2,4)
-    tablero.coloca_ampolleta(3,5)
-    tablero.coloca_ampolleta(2,6)
-    if tablero.verifica_tablero():
-        print("RESUELTO!!")
-    sleep(1)
-    tablero.coloca_ampolleta(2,0)
-    tablero.coloca_ampolleta(1,1)
-    if tablero.verifica_tablero():
-        print("RESUELTO!!")
-    sleep(1)
-    tablero.bloquea(0,2)
-    tablero.bloquea(1,3)
-    tablero.bloquea(2,2)
-    tablero.bloquea(5,5)
-    if tablero.verifica_tablero():
-        print("RESUELTO!!")
-    sleep(1)
-    tablero.coloca_ampolleta(6,5)
-    if tablero.verifica_tablero():
-        print("RESUELTO!!")
-    sleep(1)
-    tablero.coloca_ampolleta(5,1)
-    tablero.coloca_ampolleta(5,3)
-    tablero.coloca_ampolleta(4,2)
-    if tablero.verifica_tablero():
-        print("RESUELTO!!")
-    sleep(1)
-    tablero.coloca_ampolleta(0,4)
-    if tablero.verifica_tablero():
-        print("RESUELTO!!")
+    while not tablero.verifica_tablero():
+        for i in range(tablero.largo):
+            for j in range(tablero.ancho):
+                aux = tablero.tablero[i][j]
+                if isinstance(aux, Espacio) and tablero.tablero[i][j].iluminado == True:
+                    continue
+                if isinstance(aux, Pared):
+                    if aux.numero != -1:
+                        regla_1(tablero, i, j) # pared
+                        regla_2(tablero, i, j) # 
+                        regla_3(tablero, i, j)
+                    else:
+                        continue
+                else:
+                    if aux.estado == 1:
+                        regla_4(tablero, i, j)
+                    else:
+                        regla_5(tablero, i, j)
+            tablero.update()
+
+    print("Resuelto!!");
+    #sleep(1)
+    #tablero.coloca_ampolleta(1,5)
+    #tablero.coloca_ampolleta(2,4)
+    #tablero.coloca_ampolleta(3,5)
+    #tablero.coloca_ampolleta(2,6)
+    #if tablero.verifica_tablero():
+    #    print("RESUELTO!!")
+    #sleep(1)
+    #tablero.coloca_ampolleta(2,0)
+    #tablero.coloca_ampolleta(1,1)
+    #if tablero.verifica_tablero():
+    #    print("RESUELTO!!")
+    #sleep(1)
+    #tablero.bloquea(0,2)
+    #tablero.bloquea(1,3)
+    #tablero.bloquea(2,2)
+    #tablero.bloquea(5,5)
+    #if tablero.verifica_tablero():
+    #    print("RESUELTO!!")
+    #sleep(1)
+    #tablero.coloca_ampolleta(6,5)
+    #if tablero.verifica_tablero():
+    #    print("RESUELTO!!")
+    #sleep(1)
+    #tablero.coloca_ampolleta(5,1)
+    #tablero.coloca_ampolleta(5,3)
+    #tablero.coloca_ampolleta(4,2)
+    #if tablero.verifica_tablero():
+    #    print("RESUELTO!!")
+    #sleep(1)
+    #tablero.coloca_ampolleta(0,4)
+    #if tablero.verifica_tablero():
+    #    print("RESUELTO!!")
 
     while True:
         # Posibles entradas del teclado y mouse
@@ -289,6 +310,132 @@ def main():
             if event.type == pygame.QUIT:
                 sys.exit()
 
+
+
+def regla_1(tablero, x, y):
+    if isinstance(tablero.tablero[x][y], Pared):
+        cont = 0
+        for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
+            if i[0] >= tablero.ancho or i[0] < 0:
+                continue
+            if i[1] >= tablero.largo or i[1] < 0:
+                continue
+            aux = tablero.tablero[i[0]][i[1]]
+            # Si es un espacio y no está bloqueado, se cuenta
+            #   ya que puede ser tmbn una ampolleta
+            if isinstance(aux, Espacio) and ((aux.estado != 1 and aux.iluminado == False) or aux.estado == 2):
+                cont = cont+1
+        
+        # Si se cumple la condicional de la regla
+        if cont == tablero.tablero[x][y].numero:
+            for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
+                if i[0] >= tablero.ancho or i[0] < 0:
+                    continue
+                if i[1] >= tablero.largo or i[1] < 0:
+                    continue
+                tablero.coloca_ampolleta(i[0], i[1])
+                
+def regla_2(tablero, x, y):
+    if isinstance(tablero.tablero[x][y], Pared):
+        cont = 0
+        for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
+            if i[0] >= tablero.ancho or i[0] < 0:
+                continue
+            if i[1] >= tablero.largo or i[1] < 0:
+                continue
+            aux = tablero.tablero[i[0]][i[1]]
+            if isinstance(aux, Espacio) and aux.estado == 2:
+                cont = cont+1
+        if cont == tablero.tablero[x][y].numero:
+            for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
+                if i[0] >= tablero.ancho or i[0] < 0:
+                    continue
+                if i[1] >= tablero.largo or i[1] < 0:
+                    continue
+                aux = tablero.tablero[i[0]][i[1]]
+                if isinstance(aux, Espacio) and aux.estado != 2:
+                    tablero.bloquea(i[0], i[1])
+
+def regla_3(tablero, x, y):
+    if isinstance(tablero.tablero[x][y], Pared) and tablero.tablero[x][y].numero == 3:
+        for i in [(x-1,y-1), (x+1,y-1), (x-1,y+1), (x+1,y+1)]:
+            tablero.bloquea(i[0], i[1])
+
+
+
+def regla_4(tablero, x, y):
+    espacio = tablero.tablero[x][y]
+    espacios_vacios = []
+    if isinstance(espacio, Espacio) and espacio.estado == 1 and espacio.iluminado == False:
+        for i in range(y,-1,-1):
+            espacio = tablero.tablero[x][i]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado != 1 and espacio.estado != 2 and espacio.iluminado == False:
+                espacios_vacios.append((x,i))
+        for i in range(y,tablero.largo):
+            espacio = tablero.tablero[x][i]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado != 1 and espacio.iluminado == False:
+                espacios_vacios.append((x,i))
+
+        for i in range(x,-1,-1):
+            espacio = tablero.tablero[i][y]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado != 1 and espacio.iluminado == False:
+                espacios_vacios.append((i,y))
+
+        for i in range(x,tablero.ancho):
+            espacio = tablero.tablero[i][y]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado != 1 and espacio.iluminado == False:
+                espacios_vacios.append((i,y))
+    
+        if len(espacios_vacios) == 1:
+            coord = espacios_vacios[0]
+            tablero.coloca_ampolleta(coord[0], coord[1])
+
+
+def regla_5(tablero, x, y):
+    espacio = tablero.tablero[x][y]
+    espacios_vacios = 0
+    if isinstance(espacio, Pared) or espacio.estado != 0 or espacio.iluminado == True:
+        return
+    
+    for i in range(x-1,-1,-1):
+            espacio = tablero.tablero[i][y]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado == 0 and espacio.iluminado == False:
+                espacios_vacios = espacios_vacios + 1
+
+    for i in range(x+1, tablero.ancho):
+            espacio = tablero.tablero[i][y]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado == 0 and espacio.iluminado == False:
+                espacios_vacios = espacios_vacios + 1
+
+
+    for i in range(y-1,-1,-1):
+            espacio = tablero.tablero[x][i]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado == 0 and espacio.iluminado == False:
+                espacios_vacios = espacios_vacios + 1
+
+    for i in range(y+1,tablero.largo):
+            espacio = tablero.tablero[x][i]
+            if isinstance(espacio, Pared):
+                break
+            if espacio.estado == 0 and espacio.iluminado == False:
+                espacios_vacios = espacios_vacios + 1
+
+    if espacios_vacios == 0:
+        tablero.coloca_ampolleta(x, y)
 
             
 if __name__ == "__main__":
