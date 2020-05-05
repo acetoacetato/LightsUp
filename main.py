@@ -19,6 +19,8 @@ class Espacio:
             print('_', end='')
 
 
+
+
 class Pared:
     numero: int
     def __init__(self, numero):
@@ -29,6 +31,8 @@ class Pared:
         if self.numero != -1:
             print(self.numero, end='')
         print(']', end='')
+
+
 
 class Tablero:
     tablero : [[]]
@@ -66,14 +70,7 @@ class Tablero:
             print('')
 
 
-    def leer_pukamones(self, filename: str) -> list:
-        lista = []
-        f = open(filename, 'r')
-        lineas = f.readlines()
-        for linea in lineas:
-            datos = linea.strip().split(';')
-            lista.append(tuple([datos[0], float(datos[1]), float(datos[2])]))
-        return lista
+
 
 def main():
     pygame.init()
@@ -81,12 +78,16 @@ def main():
     pygame.display.set_caption("IA light up")
     # el bucle principal del juego
 
-    # Se crea el tablero vacío
-    pygame.draw.line(screen, (230,30,30), (0,0), (600,600), 4)
-    pygame.display.update()
-
     # Se carga los datos del tablero desde archivo
     tablero = Tablero(filename)
+
+    # Se crea el tablero vacío
+    pygame.draw.rect(screen, (230,30,30), pygame.Rect(150,100,400,400), 4)
+    pygame.display.update()
+
+
+    # Se crean las líneas del tablero
+    
 
     while True:
         # Posibles entradas del teclado y mouse
