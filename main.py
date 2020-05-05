@@ -9,6 +9,7 @@ filename = "input.txt"
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+
 class Imagenes:
     imagenes = {}
     def __init__(self, ancho, largo):
@@ -58,10 +59,10 @@ class Espacio:
             color=(255,255,255)
         pygame.draw.rect(screen, color, pygame.Rect(pos_x, pos_y,ancho,largo))
         #Luego se dibuja la imagen
-        print(self.estado)
+
+        ## Estado 0 es espacio vacío, así que se omite
         if self.estado == 0:
             return
-        
 
         screen.blit(Imagenes.imagenes['s-' + str(self.estado)], ((pos_x, pos_y)))
         pygame.display.update()
@@ -83,7 +84,6 @@ class Pared:
         print(']', end='')
     
     def draw(self, pos, ancho, largo):
-        print(pos)
         pos_x = 150 + floor(ancho+2)*pos[0]+2
         pos_y = 100 + floor(largo+2)*pos[1]+2
         if self.numero == -1:
@@ -128,6 +128,84 @@ class Tablero:
                 self.tablero[i][j].print()
             print('')
 
+    def coloca_ampolleta(self, x, y):
+        ancho = 400/self.ancho
+        largo = 400/self.largo
+        if x > self.ancho or x < 0:
+            return
+        if y > self.largo or y < 0:
+            return
+        espacio = self.tablero[x][y]
+
+        #TODO: Cambiar esto por excepciones
+            # Si es una pared
+        if isinstance(espacio, Pared):
+            return
+            # Si es un espacio iluminado (o contiene una ampolleta)
+        elif espacio.iluminado == True:
+            return
+
+            # Si está bloqueado
+        elif espacio.estado == 1:
+            return
+
+        else:
+            espacio.estado = 2
+            espacio.iluminado = True
+            #FIXME: mal hecho, optimizar
+            # Se recorre hacia arriba
+            for i in range(y, -1, -1):
+                espacio = self.tablero[x][i]
+                if isinstance(espacio, Pared):
+                    break;
+                else:
+                    espacio.iluminado = True
+            # Se recorre hacia abajo
+            for i in range(y, self.largo):
+                espacio = self.tablero[x][i]
+                if isinstance(espacio, Pared):
+                    break;
+                else:
+                    espacio.iluminado = True
+            # Se recorre hacia la izquierda
+            for i in range(x, -1, -1):
+                espacio = self.tablero[i][y]
+                if isinstance(espacio, Pared):
+                    break
+                else:
+                    espacio.iluminado = True
+
+            # Se recorre hacia la derecha
+            for i in range(x, self.ancho):
+                espacio = self.tablero[i][y]
+                if isinstance(espacio, Pared):
+                    break
+                else:
+                    espacio.iluminado = True
+
+        self.update()
+    def bloquea(self, x, y):
+        if x > self.ancho or x < 0:
+            return
+        if y > self.largo or y < 0:
+            return
+        
+        if isinstance(self.tablero[x][y], Pared):
+            return
+        
+        if self.tablero[x][y].estado ==2:
+            return
+        self.tablero[x][y].estado = 1
+        self.update()
+
+    def verifica_tablero(self) -> bool:
+        for i in range(self.largo):
+            for j in range(self.ancho):
+                if isinstance(self.tablero[i][j], Espacio):
+                    if self.tablero[i][j].iluminado == False:
+                        return False
+        return True
+
     def update(self):
         ancho = 400/self.ancho
         largo = 400/self.largo
@@ -171,8 +249,39 @@ def main():
 
 
     tablero.update()
-    
-    pygame.display.update()
+    sleep(1)
+    tablero.coloca_ampolleta(1,5)
+    tablero.coloca_ampolleta(2,4)
+    tablero.coloca_ampolleta(3,5)
+    tablero.coloca_ampolleta(2,6)
+    if tablero.verifica_tablero():
+        print("RESUELTO!!")
+    sleep(1)
+    tablero.coloca_ampolleta(2,0)
+    tablero.coloca_ampolleta(1,1)
+    if tablero.verifica_tablero():
+        print("RESUELTO!!")
+    sleep(1)
+    tablero.bloquea(0,2)
+    tablero.bloquea(1,3)
+    tablero.bloquea(2,2)
+    tablero.bloquea(5,5)
+    if tablero.verifica_tablero():
+        print("RESUELTO!!")
+    sleep(1)
+    tablero.coloca_ampolleta(6,5)
+    if tablero.verifica_tablero():
+        print("RESUELTO!!")
+    sleep(1)
+    tablero.coloca_ampolleta(5,1)
+    tablero.coloca_ampolleta(5,3)
+    tablero.coloca_ampolleta(4,2)
+    if tablero.verifica_tablero():
+        print("RESUELTO!!")
+    sleep(1)
+    tablero.coloca_ampolleta(0,4)
+    if tablero.verifica_tablero():
+        print("RESUELTO!!")
 
     while True:
         # Posibles entradas del teclado y mouse
