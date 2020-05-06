@@ -9,7 +9,7 @@ filename = "input4.txt"
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-
+# Clase que guarda los gráficos usados en la interfaz
 class Imagenes:
     imagenes = {}
     def __init__(self, ancho, largo):
@@ -18,18 +18,18 @@ class Imagenes:
         ampolleta = pygame.transform.scale(ampolleta, (floor(ancho-2), floor(largo-2)))
         Imagenes.imagenes['s-2'] = ampolleta
 
-        ampolleta = pygame.image.load("./img/x.png")
-        ampolleta = pygame.transform.scale(ampolleta, (floor(ancho-2), floor(largo-2)))
-        Imagenes.imagenes['s-1'] = ampolleta
+        cruz = pygame.image.load("./img/x.png")
+        cruz = pygame.transform.scale(cruz, (floor(ancho-2), floor(largo-2)))
+        Imagenes.imagenes['s-1'] = cruz
 
-        
+        # Se guardan las paredes con números
         for i in range(5):
             aux = pygame.image.load("./img/pared/" + str(i) + ".jpg")
             aux = pygame.transform.scale(aux, (floor(ancho-2), floor(largo-2)))
             Imagenes.imagenes[str(i)] = aux
 
 
-
+# Clase que representa un espacio junto con su enlace a la interfaz gráfica
 class Espacio:
     estado: int
     iluminado: bool
@@ -37,7 +37,6 @@ class Espacio:
     def __init__(self, estado=0, iluminado=False):
         self.estado = estado
         self.iluminado = iluminado
-        self.font = pygame.font.SysFont('Arial', 25)
 
     def print(self):
         if self.iluminado:
@@ -46,8 +45,8 @@ class Espacio:
             print('_', end='')
 
     def draw(self, pos, ancho, largo):
-        #pygame.draw.rect(screen, (255,255,255), pygame.Rect(pos[0], pos[1],ancho,largo))
         
+        # Calcula las posiciones en x e y de la interfaz gráfica para colocar la imagen
         pos_x = 150 + floor(ancho+2)*pos[0]+2
         pos_y = 100 + floor(largo+2)*pos[1]+2
 
@@ -57,8 +56,8 @@ class Espacio:
         else:
             color=(255,255,255)
         pygame.draw.rect(screen, color, pygame.Rect(pos_x, pos_y,ancho,largo))
-        #Luego se dibuja la imagen
 
+        #Luego se dibuja la imagen
         ## Estado 0 es espacio vacío, así que se omite
         if self.estado == 0:
             return
@@ -70,11 +69,9 @@ class Espacio:
 
 class Pared:
     numero: int
-    texto: pygame.font
 
     def __init__(self, numero):
         self.numero = numero
-        self.font = pygame.font.SysFont('Arial', 25)
 
     def print(self):
         print('[', end='')
@@ -83,15 +80,19 @@ class Pared:
         print(']', end='')
     
     def draw(self, pos, ancho, largo):
+        # Calcula las posiciones en la interfaz gráfica
         pos_x = 150 + floor(ancho+2)*pos[0]+2
         pos_y = 100 + floor(largo+2)*pos[1]+2
         if self.numero == -1:
+            # Dibuja una pared vacía en caso de necesitarlo
             pygame.draw.rect(screen, (0,0,0), pygame.Rect(pos_x, pos_y,ancho,largo))
         else:
+            # Dibuja una copia de la pared con el número
             screen.blit(Imagenes.imagenes[str(self.numero)], ((pos_x, pos_y)))
+        # Actualiza la pantalla
         pygame.display.update()
 
-
+# Clase que representa el tablero completo, guardando la matriz con los elementos, largo, ancho y la máxima dimensión
 class Tablero:
     tablero : [[]]
     largo: int
@@ -112,6 +113,8 @@ class Tablero:
             self.max_dim = self.largo
         lineas = f.readlines()
         x, y = [0,0]
+
+        # Se recorre cada linea del archivo, creando un espacio o una pared según corresponda
         for linea in lineas:
             datos = linea.strip().split(' ')
             for dato in datos:
@@ -135,13 +138,27 @@ class Tablero:
                 self.tablero[i][j].print()
             print('')
 
+
+
+    """
+        Coloca una ampolleta en el tablero, 
+        dibujándola además en la interfaz gráfica 
+        pero sin actualizarla
+    """
     def coloca_ampolleta(self, x, y):
+
+        # Se calcula el ancho y largo de la imagen
         ancho = 400/self.ancho
         largo = 400/self.largo
+
+        # Si las coordenadas entregadas se salen de 
+        #  los límites del tablero, se omite la inserción
         if x > self.ancho or x < 0:
             return
         if y > self.largo or y < 0:
             return
+
+        # Se guarda una referencia al espacio en las coordenadas
         espacio = self.tablero[x][y]
 
         #TODO: Cambiar esto por excepciones
@@ -167,30 +184,30 @@ class Tablero:
                     break;
                 else:
                     espacio.iluminado = True
-            # Se recorre hacia abajo
-            for i in range(y, self.largo):
-                espacio = self.tablero[x][i]
-                if isinstance(espacio, Pared):
-                    break;
-                else:
-                    espacio.iluminado = True
-            # Se recorre hacia la izquierda
-            for i in range(x, -1, -1):
-                espacio = self.tablero[i][y]
-                if isinstance(espacio, Pared):
-                    break
-                else:
-                    espacio.iluminado = True
 
-            # Se recorre hacia la derecha
-            for i in range(x, self.ancho):
-                espacio = self.tablero[i][y]
-                if isinstance(espacio, Pared):
-                    break
-                else:
-                    espacio.iluminado = True
+            flag_up, flag_down, flag_left, flag_right = [True, True, True, True]
+            for i in range(1, self.max_dim):
 
-        #self.update()
+                if flag_up and (y-i) >= 0 and isinstance(self.tablero[x][y-i], Espacio):
+                    self.tablero[x][y-i].iluminado = True
+                else:
+                    flag_up = False
+                
+                if flag_down and  (y+i) < self.largo and isinstance(self.tablero[x][y+i], Espacio):   
+                    self.tablero[x][y+i].iluminado = True
+                else:
+                    flag_down = False
+
+                if flag_left and (x-i) >= 0 and isinstance(self.tablero[x-i][y], Espacio):
+                    self.tablero[x-i][y].iluminado = True
+                else:
+                    flag_left = False
+
+                if flag_right and (x+i) < self.ancho and isinstance(self.tablero[x+i][y], Espacio):
+                        self.tablero[x+i][y].iluminado = True
+                else:
+                    flag_right = False
+
     def bloquea(self, x, y):
         if x > self.ancho or x < 0:
             return
@@ -267,7 +284,6 @@ def main():
         for tupla in espacios:
             espacio = tablero.tablero[tupla[0]][tupla[1]]
             if espacio.iluminado:
-                #espacios.remove(tupla)
                 continue
             elif espacio.estado == 1:
                 regla_4(tablero, tupla[0], tupla[1])
@@ -357,18 +373,18 @@ def regla_4(tablero, x, y):
                     espacios_vacios.append((x, y+i))
             except:
                 flag_up = False
-
-            try:
-                if flag_down and tablero.tablero[x][y-i].iluminado == False and tablero.tablero[x][y-i].estado == 0:
-                    espacios_vacios.append((x, y-i))
-            except:
-                flag_down = False
-
-            try:
-                if flag_left and tablero.tablero[x-i][y].iluminado == False and tablero.tablero[x-i][y].estado == 0:
-                    espacios_vacios.append((x-i, y))
-            except:
-                flag_left = False
+            if y-i >= 0:
+                try:
+                    if flag_down and tablero.tablero[x][y-i].iluminado == False and tablero.tablero[x][y-i].estado == 0:
+                        espacios_vacios.append((x, y-i))
+                except:
+                    flag_down = False
+            if x-i >= 0:
+                try:
+                    if flag_left and tablero.tablero[x-i][y].iluminado == False and tablero.tablero[x-i][y].estado == 0:
+                        espacios_vacios.append((x-i, y))
+                except:
+                    flag_left = False
 
             try:
                 if flag_right and tablero.tablero[x+i][y].iluminado == False and tablero.tablero[x+i][y].estado == 0:
@@ -392,23 +408,25 @@ def regla_5(tablero, x, y):
 
     flag_up, flag_down, flag_left, flag_right = [True, True, True, True]
     for i in range(1, tablero.max_dim):
+
         try:
             if flag_up and tablero.tablero[x][y+i].iluminado == False and tablero.tablero[x][y+i].estado == 0:
                 espacios_vacios = espacios_vacios + 1
         except:
             flag_up = False
 
-        try:
-            if flag_down and tablero.tablero[x][y-i].iluminado == False and tablero.tablero[x][y-i].estado == 0:
-                espacios_vacios = espacios_vacios + 1
-        except:
-            flag_down = False
-
-        try:
-            if flag_left and tablero.tablero[x-i][y].iluminado == False and tablero.tablero[x-i][y].estado == 0:
-                espacios_vacios = espacios_vacios + 1
-        except:
-            flag_left = False
+        if y-i >= 0:
+            try:
+                if flag_down and tablero.tablero[x][y-i].iluminado == False and tablero.tablero[x][y-i].estado == 0:
+                    espacios_vacios = espacios_vacios + 1
+            except:
+                flag_down = False
+        if x-i >= 0:
+            try:
+                if flag_left and tablero.tablero[x-i][y].iluminado == False and tablero.tablero[x-i][y].estado == 0:
+                    espacios_vacios = espacios_vacios + 1
+            except:
+                flag_left = False
 
         try:
             if flag_right and tablero.tablero[x+i][y].iluminado == False and tablero.tablero[x+i][y].estado == 0:
