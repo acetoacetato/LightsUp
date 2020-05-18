@@ -3,12 +3,10 @@ from math import floor
 from time import sleep
 
 
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 600
-filename = "input.txt"
-pygame.init()
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+
+espacios = []
+paredes = []
 # Clase que guarda los gráficos usados en la interfaz
 class Imagenes:
     imagenes = {}
@@ -224,6 +222,7 @@ class Tablero:
                         self.tablero[x+i][y].iluminado = True
                 else:
                     flag_right = False
+        return True
 
     """
     Marca una casilla como bloqueada (con una X)
@@ -267,8 +266,85 @@ class Tablero:
                 self.tablero[i][j].draw((i,j), ancho-2, largo-2)
         pygame.display.update()
 
+def text_objects(text, font):
+    textSurface = font.render(text, True, (0,0,0))
+    return textSurface, textSurface.get_rect()
+
+def boton(msg : str, x_pos, y_pos, width, height, inactive_color, active_color):
+    mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
+
+    if x_pos + width > mouse[0] > x_pos and y_pos + height > mouse[1] > y_pos:
+        pygame.draw.rect(screen, active_color, pygame.Rect(x_pos, y_pos,width,height))
+
+    else:
+        pygame.draw.rect(screen, inactive_color, pygame.Rect(x_pos, y_pos,width,height))
+    largeText = pygame.font.Font('freesansbold.ttf',12)
+    TextSurf, TextRect = text_objects(msg, largeText)
+    TextRect.center = ( x_pos +(width/2), y_pos+(height/2) )
+    
+    screen.blit(TextSurf, TextRect)
+    pygame.display.update()
 
 
+def siguiente_paso(vuelta_completa = False):
+
+    for i in range(tablero.largo):
+        for j in range(tablero.ancho):
+            #print("Se trabaja (", str(i), ", ", str(j), ")")
+            if isinstance(tablero.tablero[i][j], Espacio):
+                espacio = tablero.tablero[i][j]
+                # Si el espacio está iluminado, se omite la comprobación de las reglas.
+                if espacio.iluminado:
+                    continue
+
+                # Si el espacio está bloqueado (con una X) y no está iluminado, 
+                #   entonces es un candidato a la regla 4
+                elif espacio.estado == 1 and regla_4(tablero, i, j) and not vuelta_completa:
+                    tablero.update()
+                    print("regla 4 en (", str(i), ", ", str(j), ")")
+                    return True
+
+                # Si es un espacio, no bloqueado y no iluminado, 
+                #   entonces es un candidato a la regla 5
+                elif regla_5(tablero, i, j) and not vuelta_completa:
+                    tablero.update()
+                    print("regla 5 en (", str(i), ", ", str(j), ")")
+                    return True
+            else:
+                pared = tablero.tablero[i][j]
+
+                # Si la pared contiene un número, 
+                #   entonces es un candidato para las reglas 1, 2 y 3
+                
+                if pared.numero != -1:
+                    if regla_1(tablero, i, j) and not vuelta_completa: # pared
+                        tablero.update()
+                        print("regla 1 en (", str(i), ", ", str(j), ")")
+                        return True
+                    if regla_2(tablero, i, j) and not vuelta_completa:
+                        tablero.update()
+                        print("regla 2 en (", str(i), ", ", str(j), ")")
+                        return True # 
+                    if regla_3(tablero, i, j) and not vuelta_completa:
+                        tablero.update()
+                        print("regla 3 en (", str(i), ", ", str(j), ")")
+                        return True
+    tablero.update()
+
+def resolver_completo():
+    while not tablero.verifica_tablero():
+        siguiente_paso()
+
+
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 600
+filename = "input3.txt"
+pygame.init()
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+tablero = Tablero(filename)
+clock = pygame.time.Clock()
+sgte = False
 def main():
     
     # Se le pone titulo a la pantalla y se llena el fondo de color blanco
@@ -276,11 +352,14 @@ def main():
     screen.fill([255,255,255])
 
 
-    # Se carga los datos del tablero desde archivo
-    tablero = Tablero(filename)
 
     # Se dibuja el contorno del tablero vacío
     pygame.draw.rect(screen, (230,30,30), pygame.Rect(150,100,400,400), 4)
+    #largeText = pygame.font.Font('freesansbold.ttf',12)
+    #TextSurf, TextRect = text_objects("Siguiente paso", largeText)
+    #TextRect.center = ( 150+(100/2), 30+(40/2) )
+    #pygame.draw.rect(screen, (230,30,30), pygame.Rect(150,30,100,40))
+    #screen.blit(TextSurf, TextRect)
     pygame.display.update()
 
 
@@ -300,69 +379,61 @@ def main():
     for i in range(1, tablero.largo):
         pygame.draw.line(screen, (230, 30, 30), (150 + i*ancho, 100), (150 +  i*ancho, 100 + 400), 4)
     tablero.update()
+        
 
-
-    sleep(1)
 
     # Se separan los espacios de las paredes, para optimizar el recorrido
-    espacios = []
-    paredes = []
+    
     for i in range(tablero.largo):
-            for j in range(tablero.ancho):
-                if isinstance(tablero.tablero[i][j], Espacio):
-                    espacios.append((i,j))
-                else:
-                    paredes.append((i,j))
-
-
-    # Loop principal de la IA.
-    #   Realiza un recorrido de los espacios y las paredes hasta que el puzle esté completo
-    while not tablero.verifica_tablero():
-        
-        # Se recorren los espacios
-        for tupla in espacios:
-            espacio = tablero.tablero[tupla[0]][tupla[1]]
-
-            # Si el espacio está iluminado, se omite la comprobación de las reglas.
-            if espacio.iluminado:
-                continue
-
-            # Si el espacio está bloqueado (con una X) y no está iluminado, 
-            #   entonces es un candidato a la regla 4
-            elif espacio.estado == 1:
-                regla_4(tablero, tupla[0], tupla[1])
-
-            # Si es un espacio, no bloqueado y no iluminado, 
-            #   entonces es un candidato a la regla 5
+        for j in range(tablero.ancho):
+            if isinstance(tablero.tablero[i][j], Espacio):
+                espacios.append((i,j))
             else:
-                regla_5(tablero, tupla[0], tupla[1])
+                paredes.append((i,j))
 
 
-        # Se recorren las paredes
-        for tupla in paredes:
-            pared = tablero.tablero[tupla[0]][tupla[1]]
-
-            # Si la pared contiene un número, 
-            #   entonces es un candidato para las reglas 1, 2 y 3
-            if pared.numero != -1:
-                regla_1(tablero, tupla[0], tupla[1]) # pared
-                regla_2(tablero, tupla[0], tupla[1]) # 
-                regla_3(tablero, tupla[0], tupla[1])
-        
-        # Luego de que se apliquen todas las reglas posibles en un recorrido, 
-        #   se actualiza la interfaz gráfica (para que sea más rápido).
-        # Luego de esto se vuelve a iterar sobre todos los espacios
-        tablero.update()
-
-    print("Resuelto!!");
- 
-
+    resuelto = False
     # Un loop que evita cerrar la interfaz
     while True:
+
         # Posibles entradas del teclado y mouse
         for event in pygame.event.get():
+            mouse = pygame.mouse.get_pos()
             if event.type == pygame.QUIT:
                 sys.exit()
+            # Si se hace click izquierdo, se verifica donde
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                # Botón "Siguiente paso"
+                if 150 + 100 > mouse[0] > 150 and 30 + 40 > mouse[1] > 30:
+                    siguiente_paso()
+                    
+                # Botón "resolver completo"
+                if 290 + 120 > mouse[0] > 290 and 30 + 40 > mouse[1] > 30:
+                    resolver_completo()
+
+                # Botón "siguiente iteración"
+                if 450 + 120 > mouse[0] > 450 and 30 + 40 > mouse[1] > 30:
+                    siguiente_paso(True)
+
+            if tablero.verifica_tablero():
+                resuelto = True
+                pygame.draw.rect(screen, (255,255,255), pygame.Rect(150,30,420,40))
+                #largeText = pygame.font.Font('freesansbold.ttf',12)
+                #TextSurf, TextRect = text_objects(msg, largeText)
+                #TextRect.center = ( x_pos +(width/2), y_pos+(height/2) )
+                
+                #screen.blit(TextSurf, TextRect)
+                #pygame.display.update()
+                pygame.display.update()
+
+        if not resuelto:
+            boton("Siguiente paso", 150, 30, 100, 40, (255,230,0), (230, 200, 0))
+            boton("Resolver completo", 290, 30, 120, 40, (81,255,0), (61, 194, 0))
+            boton("1 iteración", 450, 30, 120, 40, (255,230,0), (230, 200, 0))
+        
+        clock.tick(20)
+        #print("Resuelto!!");
 
 
 """
@@ -374,8 +445,8 @@ def regla_1(tablero, x, y):
 
     # Se confirma primero que la posición ingresada es una pared
     if isinstance(tablero.tablero[x][y], Pared):
-        cont = 0
-
+        ampolletas = 0
+        espacios = 0
         # Se verifican las posiciones adyacentes, una arriba, una abajo, una izq y una derecha
         for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
 
@@ -388,11 +459,14 @@ def regla_1(tablero, x, y):
 
             # Si es un espacio y no está bloqueado, se cuenta
             #   ya que puede ser tmbn una ampolleta
-            if isinstance(aux, Espacio) and ((aux.estado != 1 and aux.iluminado == False) or aux.estado == 2):
-                cont = cont+1
+            if isinstance(aux, Espacio):
+                if (aux.estado != 1 and aux.iluminado == False) :
+                    espacios = espacios + 1
+                elif aux.estado == 2:
+                    ampolletas = ampolletas+1
         
         # Si se cumple la condicional de la regla
-        if cont == tablero.tablero[x][y].numero:
+        if (ampolletas + espacios) == tablero.tablero[x][y].numero and espacios > 0:
             for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
                 # Se vuelve a confirmar que no se excede el rango permitido
                 if i[0] >= tablero.ancho or i[0] < 0:
@@ -401,7 +475,11 @@ def regla_1(tablero, x, y):
                     continue
 
                 tablero.coloca_ampolleta(i[0], i[1])
-                
+            return True
+        else:
+            return False
+    else:
+        return False
 
 
 """
@@ -415,21 +493,29 @@ def regla_2(tablero, x, y):
     # Se confirma primero que la posición ingresada es una pared
     if isinstance(tablero.tablero[x][y], Pared):
         cont = 0
+        contX = 0
+        total = 4
         # Se verifican las posiciones adyacentes, una arriba, una abajo, una izq y una derecha
         for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
             # Si la posición está fuera del tablero, se omite
             if i[0] >= tablero.ancho or i[0] < 0:
+                total = total - 1 
                 continue
             if i[1] >= tablero.largo or i[1] < 0:
+                total = total - 1 
                 continue
             aux = tablero.tablero[i[0]][i[1]]
 
             # Si es un espacio y tiene una ampolleta, se contabiliza
-            if isinstance(aux, Espacio) and aux.estado == 2:
-                cont = cont+1
-
+            if isinstance(aux, Espacio):
+                if  aux.estado == 2:
+                    cont = cont + 1
+                elif aux.estado == 1:
+                    contX = contX + 1
+            else:
+                total = total-1
         # La condición de la regla
-        if cont == tablero.tablero[x][y].numero:
+        if cont == tablero.tablero[x][y].numero and (cont + contX) < total:
             for i in [(x,y+1), (x,y-1), (x+1,y), (x-1,y)]:
                 # Se vuelve a confirmar que no se pasa del rango
                 if i[0] >= tablero.ancho or i[0] < 0:
@@ -441,17 +527,32 @@ def regla_2(tablero, x, y):
                 # Si es un espacio sin ampolleta, se bloquea
                 if isinstance(aux, Espacio) and aux.estado != 2:
                     tablero.bloquea(i[0], i[1])
-
+            return True
+        else:
+            return False
+    else:
+        return False
 """
 Tercera regla para resolver el puzle
 Si una pared contiene un 3, entonces se llenan con una x los 4 espacios diagonales a esta.
 """
 def regla_3(tablero, x, y):
+    cont = 0
     # Se confirma que es una pared y contiene el número tres
     if isinstance(tablero.tablero[x][y], Pared) and tablero.tablero[x][y].numero == 3:
         # Se bloquean las diagonales, el método "bloquea" de Tablero confirma que están dentro del rango
         for i in [(x-1,y-1), (x+1,y-1), (x-1,y+1), (x+1,y+1)]:
-            tablero.bloquea(i[0], i[1])
+            aux = tablero.tablero[i[0]][i[1]]
+            if isinstance(aux, Espacio) and aux.estado == 1:
+                cont = cont+1
+            
+            if not tablero.bloquea(i[0], i[1]):
+                cont = cont+1
+        if cont == 4:
+            return False
+        return True
+    else:
+        return False
 
 
 """
@@ -520,7 +621,6 @@ def regla_4(tablero, x, y):
                 #   entonces lanzará una excepción que se resuelve cambiando el flag, 
                 #   deteniendo la búsqueda en esta dirección
                 flag_right = False
-            
 
 
         # Verificación de la regla
@@ -528,6 +628,11 @@ def regla_4(tablero, x, y):
             # Se obtiene el único espacio vacío encontrado y se inserta una ampolleta ahí
             coord = espacios_vacios[0]
             tablero.coloca_ampolleta(coord[0], coord[1])
+            return True
+        else:
+            return False
+    else:
+        return False
 
 """
 Quinta regla para resolver el puzle.
