@@ -330,11 +330,16 @@ def siguiente_paso(vuelta_completa = False):
                         tablero.update()
                         print("regla 6 en (", str(i), ", ", str(j), ")")
                         return True
+    return False
     tablero.update()
 
 def resolver_completo():
-    while not tablero.verifica_tablero():
-        siguiente_paso()
+    puntaje = 0
+    while not tablero.verifica_tablero() or puntaje < 1:
+        if siguiente_paso():
+            puntaje = 0
+        else:
+            return
 
 
 SCREEN_WIDTH = 700
@@ -716,29 +721,33 @@ Regla 6:
 def regla_6(tablero, x, y):
     espacio = tablero.tablero[x][y]
     espacios_vacios = 0
+    ampolletas = 0
     movimientos = 0
+    # or (isinstance(espacio, Pared) and espacio.numero == 1)
     if not isinstance(espacio, Pared):
         return False
 
     # 
     for i in [(x, y+1), (x, y-1), (x+1, y), (x-1, y)]:
-        if i[0] < 0 or i[0] > tablero.ancho or i[1] < 0 or i[1] > tablero.largo :
+        if i[0] < 0 or i[0] >= tablero.ancho or i[1] < 0 or i[1] >= tablero.largo :
             continue
         aux = tablero.tablero[i[0]][i[1]]
         if isinstance(aux, Espacio) and aux.iluminado == False and aux.estado == 0:
             espacios_vacios = espacios_vacios + 1
+        if isinstance(aux, Espacio) and aux.estado == 2:
+            ampolletas = ampolletas + 1
 
-    if espacios_vacios == espacio.numero+1 and espacio.numero != -1:
+    if espacios_vacios == espacio.numero-ampolletas + 1 and espacio.numero != -1:
         
         for i in [(x+1, y+1), (x+1, y-1), (x-1, y+1), (x-1, y-1)]:
-            if i[0] < 0 or i[0] > tablero.ancho or i[1] < 0 or i[1] > tablero.largo :
+            if i[0] < 0 or i[0] >= tablero.ancho or i[1] < 0 or i[1] >= tablero.largo :
                 continue
             aux = tablero.tablero[i[0]][i[1]]
-            if isinstance(aux, Pared) or aux.estado == 1:
+            if isinstance(aux, Pared) or aux.estado == 1 or aux.iluminado == True:
                 continue
             esp1 = tablero.tablero[i[0]][y]
             esp2 = tablero.tablero[x][i[1]]
-            if isinstance(esp1, Espacio) and esp1.estado == 0 and isinstance(esp2, Espacio) and esp2.estado == 0:
+            if isinstance(esp1, Espacio) and esp1.estado == 0 and esp1.iluminado == False and isinstance(esp2, Espacio) and esp2.estado == 0 and esp2.iluminado == False:
                 tablero.bloquea(i[0], i[1])
                 movimientos = movimientos+1
 
