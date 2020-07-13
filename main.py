@@ -344,7 +344,7 @@ def resolver_completo():
 
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 600
-filename = "input6.txt"
+filename = "input7.txt"
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 tablero = Tablero(filename)
