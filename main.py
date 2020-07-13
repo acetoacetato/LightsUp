@@ -326,9 +326,9 @@ def siguiente_paso(vuelta_completa = False):
                         tablero.update()
                         print("regla 2 en (", str(i), ", ", str(j), ")")
                         return True # 
-                    if regla_3(tablero, i, j) and not vuelta_completa:
+                    if regla_6(tablero, i, j) and not vuelta_completa:
                         tablero.update()
-                        print("regla 3 en (", str(i), ", ", str(j), ")")
+                        print("regla 6 en (", str(i), ", ", str(j), ")")
                         return True
     tablero.update()
 
@@ -339,7 +339,7 @@ def resolver_completo():
 
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 600
-filename = "input3.txt"
+filename = "input6.txt"
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 tablero = Tablero(filename)
@@ -706,6 +706,47 @@ def regla_5(tablero, x, y):
 
     # Si no hay espacios, entonces se coloca una ampolleta en la posición ingresada
     return tablero.coloca_ampolleta(x, y)
-            
+
+'''
+Regla 6:
+    Si una pared tiene número N y sólo N+1 espacios disponibles, 
+        Entonces se coloca una X en las esquinas que quiten 2 valores
+
+'''
+def regla_6(tablero, x, y):
+    espacio = tablero.tablero[x][y]
+    espacios_vacios = 0
+    movimientos = 0
+    if not isinstance(espacio, Pared):
+        return False
+
+    # 
+    for i in [(x, y+1), (x, y-1), (x+1, y), (x-1, y)]:
+        if i[0] < 0 or i[0] > tablero.ancho or i[1] < 0 or i[1] > tablero.largo :
+            continue
+        aux = tablero.tablero[i[0]][i[1]]
+        if isinstance(aux, Espacio) and aux.iluminado == False and aux.estado == 0:
+            espacios_vacios = espacios_vacios + 1
+
+    if espacios_vacios == espacio.numero+1 and espacio.numero != -1:
+        
+        for i in [(x+1, y+1), (x+1, y-1), (x-1, y+1), (x-1, y-1)]:
+            if i[0] < 0 or i[0] > tablero.ancho or i[1] < 0 or i[1] > tablero.largo :
+                continue
+            aux = tablero.tablero[i[0]][i[1]]
+            if isinstance(aux, Pared) or aux.estado == 1:
+                continue
+            esp1 = tablero.tablero[i[0]][y]
+            esp2 = tablero.tablero[x][i[1]]
+            if isinstance(esp1, Espacio) and esp1.estado == 0 and isinstance(esp2, Espacio) and esp2.estado == 0:
+                tablero.bloquea(i[0], i[1])
+                movimientos = movimientos+1
+
+
+        return movimientos != 0
+
+
+
+    
 if __name__ == "__main__":
     main()
